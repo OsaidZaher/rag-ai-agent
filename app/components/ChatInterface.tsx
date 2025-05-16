@@ -89,7 +89,7 @@ export default function ChatInterface() {
               className={`p-3 rounded-lg ${
                 message.role === "user"
                   ? "bg-blue-100 ml-auto max-w-[80%]"
-                  : "bg-gray-100 mr-auto max-w-[80%]"
+                  : "bg-gray-950 mr-auto max-w-[80%]"
               }`}
             >
               {message.content}
@@ -99,9 +99,9 @@ export default function ChatInterface() {
         {isLoading && (
           <div className="bg-gray-100 rounded-lg p-3 mr-auto max-w-[80%]">
             <div className="flex space-x-2">
-              <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce"></div>
-              <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-              <div className="h-2 w-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+              <div className="h-2 w-2 bg-gray-950 rounded-full animate-bounce"></div>
+              <div className="h-2 w-2 bg-gray-950 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+              <div className="h-2 w-2 bg-gray-950 rounded-full animate-bounce [animation-delay:0.4s]"></div>
             </div>
           </div>
         )}
