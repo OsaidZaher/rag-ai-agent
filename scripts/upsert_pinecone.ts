@@ -24,20 +24,26 @@ async function getEmbedding(text: string): Promise<number[]> {
 
 async function upsertMarkdown(file: string, namespace: string) {
   const content = await fs.readFile(path.join(process.cwd(), file), "utf-8");
-  // Split content into ~500 word chunks (approximate token count)
   const words = content.split(/\s+/);
   const chunkSize = 500;
-  const chunks = [];
+  const chunks: string[] = [];
+
   for (let i = 0; i < words.length; i += chunkSize) {
     chunks.push(words.slice(i, i + chunkSize).join(" "));
   }
+
   const vectors = await Promise.all(
     chunks.map(async (chunk, i) => ({
       id: `${file}-${i}`,
       values: await getEmbedding(chunk),
-      metadata: { file, chunk },
+      metadata: {
+        file, // e.g. "menu_items.md"
+        chunkIndex: i, // e.g. 0, 1, 2…
+        text: chunk, // the actual chunk, if you want to include it in metadata
+      },
     }))
   );
+
   await index.namespace(namespace).upsert(vectors);
 }
 
