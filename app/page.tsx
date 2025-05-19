@@ -9,7 +9,7 @@ export default function Home() {
       <div className="w-full max-w-3xl">
         <ChatInterface />
       </div>
-      <footer className="mt-8 text-center text-gray-500 text-sm">
+      <footer className="mt-8 text-center text-black text-sm">
         <p>Powered by OpenRouter API</p>
       </footer>
     </div>
