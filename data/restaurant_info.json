@@ -1,0 +1,123 @@
+[
+  {
+    "id": "restaurant_basic_info",
+    "section": "About Us",
+    "content": "Gourmet Delight is an upscale dining establishment dedicated to providing exceptional culinary experiences using locally-sourced, seasonal ingredients. Our executive chef combines classical techniques with modern innovation to create memorable dishes that delight the senses.",
+    "metadata": {
+      "info_type": "description",
+      "keywords": ["upscale", "culinary", "locally-sourced", "seasonal"]
+    }
+  },
+  {
+    "id": "restaurant_location",
+    "section": "Location",
+    "content": "123 Culinary Avenue, Westlake District, San Francisco, CA 94109",
+    "metadata": {
+      "info_type": "address",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94109",
+      "neighborhood": "Westlake District"
+    }
+  },
+  {
+    "id": "restaurant_contact",
+    "section": "Contact Information",
+    "content": {
+      "phone": "(415) 555-7890",
+      "email": "reservations@gourmetdelight.com",
+      "website": "www.gourmetdelight.com"
+    },
+    "metadata": {
+      "info_type": "contact"
+    }
+  },
+  {
+    "id": "hours_weekday",
+    "section": "Hours of Operation",
+    "content": {
+      "days": "Monday - Thursday",
+      "lunch": "11:30 AM - 2:30 PM",
+      "dinner": "5:00 PM - 10:00 PM"
+    },
+    "metadata": {
+      "info_type": "hours",
+      "day_category": "weekday"
+    }
+  },
+  {
+    "id": "hours_friday",
+    "section": "Hours of Operation",
+    "content": {
+      "days": "Friday",
+      "lunch": "11:30 AM - 2:30 PM",
+      "dinner": "5:00 PM - 11:00 PM"
+    },
+    "metadata": {
+      "info_type": "hours",
+      "day_category": "weekend"
+    }
+  },
+  {
+    "id": "hours_saturday",
+    "section": "Hours of Operation",
+    "content": {
+      "days": "Saturday",
+      "lunch": "11:00 AM - 3:00 PM",
+      "dinner": "5:00 PM - 11:00 PM"
+    },
+    "metadata": {
+      "info_type": "hours",
+      "day_category": "weekend"
+    }
+  },
+  {
+    "id": "hours_sunday",
+    "section": "Hours of Operation",
+    "content": {
+      "days": "Sunday",
+      "brunch": "10:00 AM - 3:00 PM",
+      "dinner": "4:30 PM - 9:00 PM"
+    },
+    "metadata": {
+      "info_type": "hours",
+      "day_category": "weekend"
+    }
+  },
+  {
+    "id": "reservations_info",
+    "section": "Reservations",
+    "content": "Reservations are highly recommended, especially for dinner service and weekends. Please call us or book through our website up to 30 days in advance.",
+    "metadata": {
+      "info_type": "policies",
+      "policy_category": "reservations"
+    }
+  },
+  {
+    "id": "private_events",
+    "section": "Private Events",
+    "content": "We offer private dining rooms for special occasions and corporate events. Please contact our events coordinator at events@gourmetdelight.com for more information.",
+    "metadata": {
+      "info_type": "services",
+      "service_category": "private_events"
+    }
+  },
+  {
+    "id": "dress_code",
+    "section": "Dress Code",
+    "content": "Smart casual attire is recommended for lunch. Semi-formal attire is suggested for dinner service (no shorts, athletic wear, or flip-flops).",
+    "metadata": {
+      "info_type": "policies",
+      "policy_category": "dress_code"
+    }
+  },
+  {
+    "id": "parking_info",
+    "section": "Parking",
+    "content": "Complimentary valet parking is available during dinner service. Public parking garage located within one block of the restaurant.",
+    "metadata": {
+      "info_type": "services",
+      "service_category": "parking"
+    }
+  }
+]

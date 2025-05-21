@@ -1,0 +1,182 @@
+[
+  {
+    "id": "lunch_caesar_salad",
+    "category": "Lunch Menu",
+    "title": "Classic Caesar Salad",
+    "description": "Fresh romaine lettuce tossed with our house-made Caesar dressing, topped with shaved parmesan, garlic croutons, and grilled chicken breast.",
+    "price": 14.95,
+    "metadata": {
+      "meal_type": "lunch",
+      "cuisine_style": "American",
+      "dietary_options": ["protein-rich"]
+    }
+  },
+  {
+    "id": "lunch_mediterranean_wrap",
+    "category": "Lunch Menu",
+    "title": "Mediterranean Wrap",
+    "description": "Grilled vegetables, hummus, feta cheese, and mixed greens wrapped in a warm spinach tortilla, served with sweet potato fries.",
+    "price": 12.95,
+    "metadata": {
+      "meal_type": "lunch",
+      "cuisine_style": "Mediterranean",
+      "dietary_options": ["vegetarian"]
+    }
+  },
+  {
+    "id": "lunch_beef_burger",
+    "category": "Lunch Menu",
+    "title": "Signature Beef Burger",
+    "description": "8oz prime beef patty with aged cheddar, caramelized onions, lettuce, tomato, and house sauce on a brioche bun, served with truffle fries.",
+    "price": 16.95,
+    "metadata": {
+      "meal_type": "lunch",
+      "cuisine_style": "American",
+      "dietary_options": ["protein-rich"]
+    }
+  },
+  {
+    "id": "lunch_mushroom_risotto",
+    "category": "Lunch Menu",
+    "title": "Wild Mushroom Risotto",
+    "description": "Creamy Arborio rice with a medley of wild mushrooms, white wine, shaved parmesan, and fresh herbs.",
+    "price": 15.95,
+    "metadata": {
+      "meal_type": "lunch",
+      "cuisine_style": "Italian",
+      "dietary_options": ["vegetarian"]
+    }
+  },
+  {
+    "id": "lunch_salmon_bowl",
+    "category": "Lunch Menu",
+    "title": "Grilled Salmon Bowl",
+    "description": "Grilled Atlantic salmon served over quinoa with roasted seasonal vegetables, avocado, and lemon-dill sauce.",
+    "price": 17.95,
+    "metadata": {
+      "meal_type": "lunch",
+      "cuisine_style": "Fusion",
+      "dietary_options": ["protein-rich", "gluten-free"]
+    }
+  },
+  {
+    "id": "lunch_flatbread",
+    "category": "Lunch Menu",
+    "title": "Artisanal Flatbread",
+    "description": "Handcrafted flatbread topped with prosciutto, arugula, fig jam, goat cheese, and balsamic glaze.",
+    "price": 13.95,
+    "metadata": {
+      "meal_type": "lunch",
+      "cuisine_style": "Mediterranean",
+      "dietary_options": []
+    }
+  },
+  {
+    "id": "lunch_lobster_bisque",
+    "category": "Lunch Menu",
+    "title": "Lobster Bisque",
+    "description": "Rich and creamy soup made with fresh lobster, finished with a touch of sherry and chives.",
+    "price": 10.95,
+    "metadata": {
+      "meal_type": "lunch",
+      "cuisine_style": "French",
+      "dietary_options": ["seafood"]
+    }
+  },
+  {
+    "id": "dinner_filet_mignon",
+    "category": "Dinner Menu",
+    "title": "Filet Mignon",
+    "description": "8oz center-cut tenderloin grilled to perfection, served with garlic mashed potatoes, seasonal vegetables, and red wine reduction.",
+    "price": 34.95,
+    "metadata": {
+      "meal_type": "dinner",
+      "cuisine_style": "American",
+      "dietary_options": ["protein-rich"]
+    }
+  },
+  {
+    "id": "dinner_sea_bass",
+    "category": "Dinner Menu",
+    "title": "Chilean Sea Bass",
+    "description": "Pan-seared sea bass with lemon-herb butter sauce, served over saffron risotto and asparagus.",
+    "price": 32.95,
+    "metadata": {
+      "meal_type": "dinner",
+      "cuisine_style": "Seafood",
+      "dietary_options": ["seafood"]
+    }
+  },
+  {
+    "id": "dinner_duck_confit",
+    "category": "Dinner Menu",
+    "title": "Duck Confit",
+    "description": "Slow-cooked duck leg with crispy skin, served with cherry reduction, roasted fingerling potatoes, and braised greens.",
+    "price": 29.95,
+    "metadata": {
+      "meal_type": "dinner",
+      "cuisine_style": "French",
+      "dietary_options": []
+    }
+  },
+  {
+    "id": "dinner_truffle_linguine",
+    "category": "Dinner Menu",
+    "title": "Truffle Linguine",
+    "description": "House-made linguine tossed with black truffle cream sauce, wild mushrooms, and shaved parmesan.",
+    "price": 24.95,
+    "metadata": {
+      "meal_type": "dinner",
+      "cuisine_style": "Italian",
+      "dietary_options": ["vegetarian"]
+    }
+  },
+  {
+    "id": "dinner_rack_of_lamb",
+    "category": "Dinner Menu",
+    "title": "Rack of Lamb",
+    "description": "Herb-crusted New Zealand lamb, served with mint jus, polenta, and glazed baby carrots.",
+    "price": 36.95,
+    "metadata": {
+      "meal_type": "dinner",
+      "cuisine_style": "French",
+      "dietary_options": ["protein-rich"]
+    }
+  },
+  {
+    "id": "dinner_seafood_paella",
+    "category": "Dinner Menu",
+    "title": "Seafood Paella",
+    "description": "Saffron-infused rice with shrimp, clams, mussels, calamari, and chorizo, garnished with fresh herbs.",
+    "price": 28.95,
+    "metadata": {
+      "meal_type": "dinner",
+      "cuisine_style": "Spanish",
+      "dietary_options": ["seafood"]
+    }
+  },
+  {
+    "id": "dinner_vegetable_wellington",
+    "category": "Dinner Menu",
+    "title": "Vegetable Wellington",
+    "description": "Roasted portobello mushrooms, spinach, and roasted red peppers wrapped in puff pastry, served with vegetable demi-glace.",
+    "price": 22.95,
+    "metadata": {
+      "meal_type": "dinner",
+      "cuisine_style": "British",
+      "dietary_options": ["vegetarian"]
+    }
+  },
+  {
+    "id": "dinner_chateaubriand",
+    "category": "Dinner Menu",
+    "title": "Chateaubriand (For Two)",
+    "description": "16oz center-cut beef tenderloin carved tableside, served with béarnaise sauce, roasted vegetables, and duchess potatoes.",
+    "price": 75.95,
+    "metadata": {
+      "meal_type": "dinner",
+      "cuisine_style": "French",
+      "dietary_options": ["protein-rich", "shareable"]
+    }
+  }
+]
