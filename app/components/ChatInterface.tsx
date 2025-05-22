@@ -1,29 +1,75 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useRef, useEffect } from "react";
+import { Send, X, ChefHat, Clock, Calendar, Menu } from "lucide-react";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
 };
 
+type QuickAction = {
+  icon: React.ReactNode;
+  label: string;
+  query: string;
+};
+
 export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const quickActions: QuickAction[] = [
+    {
+      icon: <ChefHat className="h-5 w-5" />,
+      label: "Today's Specials",
+      query: "What are today's specials?",
+    },
+    {
+      icon: <Calendar className="h-5 w-5" />,
+      label: "Make a Reservation",
+      query: "I'd like to make a reservation",
+    },
+    {
+      icon: <Clock className="h-5 w-5" />,
+      label: "Opening Hours",
+      query: "What are your opening hours?",
+    },
+    {
+      icon: <Menu className="h-5 w-5" />,
+      label: "See Full Menu",
+      query: "Can I see your full menu?",
+    },
+  ];
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  // Focus input when chat opens
+  useEffect(() => {
+    if (isChatOpen) {
+      inputRef.current?.focus();
+    }
+  }, [isChatOpen]);
+
+  const handleSubmit = async (
+    e: React.FormEvent | null,
+    customQuery?: string
+  ) => {
+    if (e) e.preventDefault();
+
+    const queryText = customQuery || input;
+    if (!queryText.trim()) return;
 
     // Add user message to the chat
-    const userMessage: Message = { role: "user", content: input };
+    const userMessage: Message = { role: "user", content: queryText };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -68,62 +114,118 @@ export default function ChatInterface() {
     }
   };
 
+  const handleQuickAction = (query: string) => {
+    handleSubmit(null, query);
+  };
+
   return (
-    <div className="flex flex-col w-full max-w-3xl mx-auto h-[600px] border border-gray-300 rounded-lg overflow-hidden bg-white">
-      <div className="bg-[#1a1a1a] text-white p-4 font-bold text-lg">
-        Gourmet Delight Restaurant Assistant
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col max-w-sm w-full shadow-xl rounded-lg overflow-hidden">
+      {/* Chat Header */}
+      <div className="bg-[#ff9980] text-white p-4 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <div className="bg-white p-1 rounded-full">
+            <ChefHat className="h-5 w-5 text-[#ff9980]" />
+          </div>
+          <div>
+            <h3 className="font-bold">Culinary Concierge</h3>
+            <p className="text-xs">Online | Ready to assist</p>
+          </div>
+        </div>
+        <button
+          onClick={() => setIsChatOpen(false)}
+          className="text-white hover:bg-[#ff8066] p-1 rounded-full"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-auto p-4 space-y-4">
+      {/* Chat Body */}
+      <div className="bg-[#fff9f5] flex-1 overflow-auto p-4 space-y-4 h-[400px]">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 mt-10">
-            <p>Welcome to Gourmet Delight!</p>
-            <p className="text-sm mt-2">
-              Ask me about our menu, hours, or making a reservation.
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="bg-[#ffebe6] p-6 rounded-full mb-4">
+              <Menu className="h-10 w-10 text-[#ff9980]" />
+            </div>
+            <h2 className="text-xl font-semibold text-[#5a3e36] mb-2">
+              Welcome to our Restaurant
+            </h2>
+            <p className="text-[#8a7a75] text-center mb-6">
+              I'm your personal dining assistant.
+              <br />
+              How can I help you today?
             </p>
+
+            <div className="grid grid-cols-2 gap-3 w-full">
+              {quickActions.map((action, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleQuickAction(action.query)}
+                  className="flex flex-col items-center p-3 bg-white rounded-lg border border-[#ffe0d6] hover:bg-[#ffebe6] transition-colors"
+                >
+                  <div className="text-[#ff9980] mb-2">{action.icon}</div>
+                  <span className="text-sm text-[#5a3e36]">{action.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         ) : (
-          messages.map((message, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded-lg ${
-                message.role === "user"
-                  ? "bg-blue-100 ml-auto max-w-[80%]"
-                  : "bg-gray-950 mr-auto max-w-[80%]"
-              }`}
-            >
-              {message.content}
-            </div>
-          ))
+          <>
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex ${
+                  message.role === "user" ? "justify-end" : "justify-start"
+                }`}
+              >
+                <div
+                  className={`p-3 rounded-lg max-w-[80%] ${
+                    message.role === "user"
+                      ? "bg-[#e6f7ff] text-[#3768a1]"
+                      : "bg-white text-[#5a3e36] border border-[#ffe0d6]"
+                  }`}
+                >
+                  {message.content}
+                </div>
+              </div>
+            ))}
+          </>
         )}
+
         {isLoading && (
-          <div className="bg-gray-100 rounded-lg p-3 mr-auto max-w-[80%]">
-            <div className="flex space-x-2">
-              <div className="h-2 w-2 bg-gray-950 rounded-full animate-bounce"></div>
-              <div className="h-2 w-2 bg-gray-950 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-              <div className="h-2 w-2 bg-gray-950 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+          <div className="flex justify-start">
+            <div className="bg-white rounded-lg p-3 border border-[#ffe0d6] max-w-[80%]">
+              <div className="flex space-x-2">
+                <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce"></div>
+                <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce [animation-delay:0.4s]"></div>
+              </div>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-gray-300 p-4">
-        <div className="flex space-x-2">
+      {/* Chat Input */}
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-3 border-t border-[#ffe0d6]"
+      >
+        <div className="flex items-center gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about our menu, hours, or reservations..."
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Type your question..."
+            className="flex-1 px-4 py-2 border text-slate-500  border-[#ffe0d6] rounded-full focus:outline-none focus:ring-2 focus:ring-[#ff9980]"
             disabled={isLoading}
           />
           <button
             type="submit"
-            disabled={isLoading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-r-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-400"
+            disabled={isLoading || !input.trim()}
+            className="bg-[#ff9980] text-white p-2 rounded-full hover:bg-[#ff8066] focus:outline-none focus:ring-2 focus:ring-[#ff9980] disabled:bg-[#ffccc2] disabled:cursor-not-allowed"
           >
-            Send
+            <Send className="h-5 w-5" />
           </button>
         </div>
       </form>
