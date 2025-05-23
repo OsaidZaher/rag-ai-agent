@@ -3,7 +3,17 @@
 import type React from "react";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, X, ChefHat, Clock, Calendar, Menu } from "lucide-react";
+import {
+  Send,
+  X,
+  ChefHat,
+  Clock,
+  Calendar,
+  Menu,
+  MessageCircle,
+  User,
+  RotateCcw,
+} from "lucide-react";
 
 type Message = {
   role: "user" | "assistant";
@@ -118,117 +128,169 @@ export default function ChatInterface() {
     handleSubmit(null, query);
   };
 
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+  };
+
+  const clearChat = () => {
+    setMessages([]);
+    setInput("");
+  };
+
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col max-w-sm w-full shadow-xl rounded-lg overflow-hidden">
-      {/* Chat Header */}
-      <div className="bg-[#ff9980] text-white p-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <div className="bg-white p-1 rounded-full">
-            <ChefHat className="h-5 w-5 text-[#ff9980]" />
-          </div>
-          <div>
-            <h3 className="font-bold">Culinary Concierge</h3>
-            <p className="text-xs">Online | Ready to assist</p>
-          </div>
-        </div>
-        <button
-          onClick={() => setIsChatOpen(false)}
-          className="text-white hover:bg-[#ff8066] p-1 rounded-full"
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      {/* Chat Body */}
-      <div className="bg-[#fff9f5] flex-1 overflow-auto p-4 space-y-4 h-[400px]">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="bg-[#ffebe6] p-6 rounded-full mb-4">
-              <Menu className="h-10 w-10 text-[#ff9980]" />
+    <div className="fixed bottom-4 right-4 z-50 flex flex-col">
+      {isChatOpen ? (
+        <div className="max-w-sm w-full shadow-xl rounded-lg overflow-hidden">
+          {/* Chat Header */}
+          <div className="bg-[#ff9980] text-white p-4 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <div className="bg-white p-1 rounded-full">
+                <ChefHat className="h-5 w-5 text-[#ff9980]" />
+              </div>
+              <div>
+                <h3 className="font-bold">Culinary Concierge</h3>
+                <p className="text-xs">Online | Ready to assist</p>
+              </div>
             </div>
-            <h2 className="text-xl font-semibold text-[#5a3e36] mb-2">
-              Welcome to our Restaurant
-            </h2>
-            <p className="text-[#8a7a75] text-center mb-6">
-              I'm your personal dining assistant.
-              <br />
-              How can I help you today?
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 w-full">
-              {quickActions.map((action, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleQuickAction(action.query)}
-                  className="flex flex-col items-center p-3 bg-white rounded-lg border border-[#ffe0d6] hover:bg-[#ffebe6] transition-colors"
-                >
-                  <div className="text-[#ff9980] mb-2">{action.icon}</div>
-                  <span className="text-sm text-[#5a3e36]">{action.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <>
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={clearChat}
+                className="text-white hover:bg-[#ff8066] p-1 rounded-full transition-colors"
+                title="Clear chat"
               >
-                <div
-                  className={`p-3 rounded-lg max-w-[80%] ${
-                    message.role === "user"
-                      ? "bg-[#e6f7ff] text-[#3768a1]"
-                      : "bg-white text-[#5a3e36] border border-[#ffe0d6]"
-                  }`}
-                >
-                  {message.content}
+                <RotateCcw className="h-5 w-5" />
+              </button>
+              <button
+                onClick={toggleChat}
+                className="text-white hover:bg-[#ff8066] p-1 rounded-full transition-colors"
+                title="Close chat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Chat Body */}
+          <div className="bg-[#faf6f2] flex-1 overflow-auto p-4 space-y-4 h-[400px]">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="bg-[#ffebe6] p-6 rounded-full mb-4">
+                  <Menu className="h-10 w-10 text-[#ff9980]" />
+                </div>
+                <h2 className="text-xl font-semibold text-[#5a3e36] mb-2">
+                  Welcome to our Restaurant
+                </h2>
+                <p className="text-[#8a7a75] text-center mb-6">
+                  I'm your personal dining assistant.
+                  <br />
+                  How can I help you today?
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 w-full">
+                  {quickActions.map((action, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuickAction(action.query)}
+                      className="flex flex-col items-center p-3 bg-white rounded-lg border border-[#ffe0d6] hover:bg-[#ffebe6] transition-colors"
+                    >
+                      <div className="text-[#ff9980] mb-2">{action.icon}</div>
+                      <span className="text-sm text-[#5a3e36]">
+                        {action.label}
+                      </span>
+                    </button>
+                  ))}
                 </div>
               </div>
-            ))}
-          </>
-        )}
+            ) : (
+              <>
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-3 ${
+                      message.role === "user" ? "flex-row-reverse" : "flex-row"
+                    }`}
+                  >
+                    {/* Profile Icon */}
+                    <div
+                      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                        message.role === "user"
+                          ? "bg-[#4a4a4a]"
+                          : "bg-[#ff9980]"
+                      }`}
+                    >
+                      {message.role === "user" ? (
+                        <User className="h-4 w-4 text-white" />
+                      ) : (
+                        <ChefHat className="h-4 w-4 text-white" />
+                      )}
+                    </div>
 
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-white rounded-lg p-3 border border-[#ffe0d6] max-w-[80%]">
-              <div className="flex space-x-2">
-                <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce"></div>
-                <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    {/* Message Bubble */}
+                    <div
+                      className={`p-3 rounded-lg max-w-[75%] ${
+                        message.role === "user"
+                          ? "bg-[#e8f4fd] text-[#2c5aa0] border border-[#d1e7dd]"
+                          : "bg-white text-[#5a3e36] border border-[#e5e5e5] shadow-sm"
+                      }`}
+                    >
+                      {message.content}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {isLoading && (
+              <div className="flex justify-start items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#ff9980] flex items-center justify-center">
+                  <ChefHat className="h-4 w-4 text-white" />
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-[#e5e5e5] shadow-sm max-w-[75%]">
+                  <div className="flex space-x-2">
+                    <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce"></div>
+                    <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                    <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      {/* Chat Input */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-3 border-t border-[#ffe0d6]"
-      >
-        <div className="flex items-center gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your question..."
-            className="flex-1 px-4 py-2 border text-slate-500  border-[#ffe0d6] rounded-full focus:outline-none focus:ring-2 focus:ring-[#ff9980]"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={isLoading || !input.trim()}
-            className="bg-[#ff9980] text-white p-2 rounded-full hover:bg-[#ff8066] focus:outline-none focus:ring-2 focus:ring-[#ff9980] disabled:bg-[#ffccc2] disabled:cursor-not-allowed"
+          {/* Chat Input */}
+          <form
+            onSubmit={handleSubmit}
+            className="bg-white p-3 border-t border-[#ffe0d6]"
           >
-            <Send className="h-5 w-5" />
-          </button>
+            <div className="flex items-center gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type your question..."
+                className="flex-1 px-4 py-2 border text-slate-500 border-[#ffe0d6] rounded-full focus:outline-none focus:ring-2 focus:ring-[#ff9980]"
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="bg-[#ff9980] text-white p-2 rounded-full hover:bg-[#ff8066] focus:outline-none focus:ring-2 focus:ring-[#ff9980] disabled:bg-[#ffccc2] disabled:cursor-not-allowed"
+              >
+                <Send className="h-5 w-5" />
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+      ) : (
+        // Chat Open Button (visible when chat is closed)
+        <button
+          onClick={toggleChat}
+          className="bg-[#ff9980] text-white p-3 rounded-full shadow-lg hover:bg-[#ff8066] focus:outline-none focus:ring-2 focus:ring-[#ff9980] transition-colors"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </button>
+      )}
     </div>
   );
 }
