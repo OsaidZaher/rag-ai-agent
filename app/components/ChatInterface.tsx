@@ -13,6 +13,12 @@ import {
   MessageCircle,
   User,
   RotateCcw,
+  CalendarCheck,
+  Phone,
+  Mail,
+  Users,
+  CheckCircle,
+  Info,
 } from "lucide-react";
 
 type Message = {
@@ -20,10 +26,23 @@ type Message = {
   content: string;
 };
 
+type BookingState = {
+  step: string;
+  data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    dateTime?: string;
+    partySize?: number;
+    specialRequests?: string;
+  };
+} | null;
+
 type QuickAction = {
   icon: React.ReactNode;
   label: string;
   query: string;
+  type: "info" | "booking";
 };
 
 export default function ChatInterface() {
@@ -31,6 +50,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(true);
+  const [bookingState, setBookingState] = useState<BookingState>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,21 +59,25 @@ export default function ChatInterface() {
       icon: <ChefHat className="h-5 w-5" />,
       label: "Today's Specials",
       query: "What are today's specials?",
+      type: "info",
     },
     {
-      icon: <Calendar className="h-5 w-5" />,
-      label: "Make a Reservation",
+      icon: <CalendarCheck className="h-5 w-5" />,
+      label: "Make Reservation",
       query: "I'd like to make a reservation",
+      type: "booking",
     },
     {
       icon: <Clock className="h-5 w-5" />,
       label: "Opening Hours",
       query: "What are your opening hours?",
+      type: "info",
     },
     {
       icon: <Menu className="h-5 w-5" />,
-      label: "See Full Menu",
+      label: "Full Menu",
       query: "Can I see your full menu?",
+      type: "info",
     },
   ];
 
@@ -96,6 +120,7 @@ export default function ChatInterface() {
             role,
             content,
           })),
+          bookingState: bookingState,
         }),
       });
 
@@ -104,6 +129,11 @@ export default function ChatInterface() {
       }
 
       const data = await response.json();
+
+      // Update booking state if provided
+      if (data.bookingState !== undefined) {
+        setBookingState(data.bookingState);
+      }
 
       // Add assistant response to chat
       setMessages((prev) => [
@@ -135,6 +165,95 @@ export default function ChatInterface() {
   const clearChat = () => {
     setMessages([]);
     setInput("");
+    setBookingState(null);
+  };
+
+  // Get booking progress indicator
+  const getBookingProgress = () => {
+    if (!bookingState) return null;
+
+    const steps = [
+      "name",
+      "email",
+      "phone",
+      "datetime",
+      "party_size",
+      "special_requests",
+      "confirmation",
+    ];
+    const currentIndex = steps.indexOf(bookingState.step);
+    const progress = ((currentIndex + 1) / steps.length) * 100;
+
+    return (
+      <div className="px-4 py-2 bg-blue-50 border-b border-blue-200">
+        <div className="flex items-center justify-between text-sm text-blue-700 mb-1">
+          <span className="flex items-center gap-1">
+            <CalendarCheck className="h-4 w-4" />
+            Booking in Progress
+          </span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <div className="w-full bg-blue-200 rounded-full h-2">
+          <div
+            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+      </div>
+    );
+  };
+
+  // Get booking summary card
+  const getBookingSummary = () => {
+    if (
+      !bookingState ||
+      !bookingState.data ||
+      Object.keys(bookingState.data).length === 0
+    )
+      return null;
+
+    const { data } = bookingState;
+
+    return (
+      <div className="mx-4 mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <h4 className="text-sm font-medium text-green-800 mb-2 flex items-center gap-1">
+          <CheckCircle className="h-4 w-4" />
+          Booking Details
+        </h4>
+        <div className="space-y-1 text-sm text-green-700">
+          {data.name && (
+            <div className="flex items-center gap-2">
+              <User className="h-3 w-3" />
+              <span>{data.name}</span>
+            </div>
+          )}
+          {data.email && (
+            <div className="flex items-center gap-2">
+              <Mail className="h-3 w-3" />
+              <span>{data.email}</span>
+            </div>
+          )}
+          {data.phone && (
+            <div className="flex items-center gap-2">
+              <Phone className="h-3 w-3" />
+              <span>{data.phone}</span>
+            </div>
+          )}
+          {data.dateTime && (
+            <div className="flex items-center gap-2">
+              <Calendar className="h-3 w-3" />
+              <span>{new Date(data.dateTime).toLocaleString()}</span>
+            </div>
+          )}
+          {data.partySize && (
+            <div className="flex items-center gap-2">
+              <Users className="h-3 w-3" />
+              <span>Party of {data.partySize}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -148,8 +267,14 @@ export default function ChatInterface() {
                 <ChefHat className="h-5 w-5 text-[#ff9980]" />
               </div>
               <div>
-                <h3 className="font-bold">Culinary Concierge</h3>
-                <p className="text-xs">Online | Ready to assist</p>
+                <h3 className="font-bold">
+                  {bookingState ? "Booking Assistant" : "Culinary Concierge"}
+                </h3>
+                <p className="text-xs">
+                  {bookingState
+                    ? "Reservation in progress..."
+                    : "Online | Ready to assist"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -170,20 +295,25 @@ export default function ChatInterface() {
             </div>
           </div>
 
+          {/* Booking Progress Indicator */}
+          {getBookingProgress()}
+
           {/* Chat Body */}
           <div className="bg-[#faf6f2] flex-1 overflow-auto p-4 space-y-4 h-[400px]">
+            {/* Booking Summary Card */}
+            {getBookingSummary()}
+
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="bg-[#ffebe6] p-6 rounded-full mb-4">
                   <Menu className="h-10 w-10 text-[#ff9980]" />
                 </div>
                 <h2 className="text-xl font-semibold text-[#5a3e36] mb-2">
-                  Welcome to our Restaurant
+                  Welcome to Gourmet Delight
                 </h2>
                 <p className="text-[#8a7a75] text-center mb-6">
-                  I'm your personal dining assistant.
-                  <br />
-                  How can I help you today?
+                  I'm your AI dining assistant.
+                  <br />I can help with menu questions or reservations!
                 </p>
 
                 <div className="grid grid-cols-2 gap-3 w-full">
@@ -191,15 +321,29 @@ export default function ChatInterface() {
                     <button
                       key={index}
                       onClick={() => handleQuickAction(action.query)}
-                      className="flex flex-col items-center p-3 bg-white rounded-lg border border-[#ffe0d6] hover:bg-[#ffebe6] transition-colors"
+                      className={`flex flex-col items-center p-3 rounded-lg border transition-colors ${
+                        action.type === "booking"
+                          ? "bg-blue-50 border-blue-200 hover:bg-blue-100"
+                          : "bg-white border-[#ffe0d6] hover:bg-[#ffebe6]"
+                      }`}
                     >
-                      <div className="text-[#ff9980] mb-2">{action.icon}</div>
+                      <div
+                        className={`mb-2 ${
+                          action.type === "booking"
+                            ? "text-blue-500"
+                            : "text-[#ff9980]"
+                        }`}
+                      >
+                        {action.icon}
+                      </div>
                       <span className="text-sm text-[#5a3e36]">
                         {action.label}
                       </span>
                     </button>
                   ))}
                 </div>
+
+                {/* Info Notice */}
               </div>
             ) : (
               <>
@@ -215,11 +359,15 @@ export default function ChatInterface() {
                       className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                         message.role === "user"
                           ? "bg-[#4a4a4a]"
+                          : bookingState
+                          ? "bg-blue-500"
                           : "bg-[#ff9980]"
                       }`}
                     >
                       {message.role === "user" ? (
                         <User className="h-4 w-4 text-white" />
+                      ) : bookingState ? (
+                        <CalendarCheck className="h-4 w-4 text-white" />
                       ) : (
                         <ChefHat className="h-4 w-4 text-white" />
                       )}
@@ -227,9 +375,11 @@ export default function ChatInterface() {
 
                     {/* Message Bubble */}
                     <div
-                      className={`p-3 rounded-lg max-w-[75%] ${
+                      className={`p-3 rounded-lg max-w-[75%] whitespace-pre-line ${
                         message.role === "user"
                           ? "bg-[#e8f4fd] text-[#2c5aa0] border border-[#d1e7dd]"
+                          : bookingState
+                          ? "bg-blue-50 text-blue-900 border border-blue-200"
                           : "bg-white text-[#5a3e36] border border-[#e5e5e5] shadow-sm"
                       }`}
                     >
@@ -242,14 +392,40 @@ export default function ChatInterface() {
 
             {isLoading && (
               <div className="flex justify-start items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[#ff9980] flex items-center justify-center">
-                  <ChefHat className="h-4 w-4 text-white" />
+                <div
+                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    bookingState ? "bg-blue-500" : "bg-[#ff9980]"
+                  }`}
+                >
+                  {bookingState ? (
+                    <CalendarCheck className="h-4 w-4 text-white" />
+                  ) : (
+                    <ChefHat className="h-4 w-4 text-white" />
+                  )}
                 </div>
-                <div className="bg-white rounded-lg p-3 border border-[#e5e5e5] shadow-sm max-w-[75%]">
+                <div
+                  className={`rounded-lg p-3 border shadow-sm max-w-[75%] ${
+                    bookingState
+                      ? "bg-blue-50 border-blue-200"
+                      : "bg-white border-[#e5e5e5]"
+                  }`}
+                >
                   <div className="flex space-x-2">
-                    <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce"></div>
-                    <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                    <div className="h-2 w-2 bg-[#ff9980] rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                    <div
+                      className={`h-2 w-2 rounded-full animate-bounce ${
+                        bookingState ? "bg-blue-500" : "bg-[#ff9980]"
+                      }`}
+                    ></div>
+                    <div
+                      className={`h-2 w-2 rounded-full animate-bounce [animation-delay:0.2s] ${
+                        bookingState ? "bg-blue-500" : "bg-[#ff9980]"
+                      }`}
+                    ></div>
+                    <div
+                      className={`h-2 w-2 rounded-full animate-bounce [animation-delay:0.4s] ${
+                        bookingState ? "bg-blue-500" : "bg-[#ff9980]"
+                      }`}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -257,10 +433,79 @@ export default function ChatInterface() {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Smart Input Suggestions */}
+          {bookingState && (
+            <div className="bg-blue-50 border-t border-blue-200 p-2">
+              <div className="flex flex-wrap gap-1">
+                {bookingState.step === "datetime" && (
+                  <>
+                    <button
+                      onClick={() => handleSubmit(null, "Tomorrow at 7 PM")}
+                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                    >
+                      Tomorrow 7 PM
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleSubmit(null, "This Saturday at 6:30 PM")
+                      }
+                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                    >
+                      Saturday 6:30 PM
+                    </button>
+                  </>
+                )}
+                {bookingState.step === "party_size" && (
+                  <>
+                    {[2, 4, 6].map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => handleSubmit(null, size.toString())}
+                        className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                      >
+                        {size} people
+                      </button>
+                    ))}
+                  </>
+                )}
+                {bookingState.step === "special_requests" && (
+                  <>
+                    <button
+                      onClick={() => handleSubmit(null, "None")}
+                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                    >
+                      None
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleSubmit(null, "Vegetarian options please")
+                      }
+                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                    >
+                      Vegetarian
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleSubmit(null, "Anniversary celebration")
+                      }
+                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                    >
+                      Anniversary
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Chat Input */}
           <form
             onSubmit={handleSubmit}
-            className="bg-white p-3 border-t border-[#ffe0d6]"
+            className={`p-3 border-t ${
+              bookingState
+                ? "bg-blue-50 border-blue-200"
+                : "bg-white border-[#ffe0d6]"
+            }`}
           >
             <div className="flex items-center gap-2">
               <input
@@ -268,14 +513,26 @@ export default function ChatInterface() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your question..."
-                className="flex-1 px-4 py-2 border text-slate-500 border-[#ffe0d6] rounded-full focus:outline-none focus:ring-2 focus:ring-[#ff9980]"
+                placeholder={
+                  bookingState
+                    ? "Continue with your booking..."
+                    : "Ask about menu or make a reservation..."
+                }
+                className={`flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 text-slate-500 ${
+                  bookingState
+                    ? "border-blue-200 focus:ring-blue-400"
+                    : "border-[#ffe0d6] focus:ring-[#ff9980]"
+                }`}
                 disabled={isLoading}
               />
               <button
                 type="submit"
                 disabled={isLoading || !input.trim()}
-                className="bg-[#ff9980] text-white p-2 rounded-full hover:bg-[#ff8066] focus:outline-none focus:ring-2 focus:ring-[#ff9980] disabled:bg-[#ffccc2] disabled:cursor-not-allowed"
+                className={`text-white p-2 rounded-full focus:outline-none focus:ring-2 disabled:cursor-not-allowed transition-colors ${
+                  bookingState
+                    ? "bg-blue-500 hover:bg-blue-600 focus:ring-blue-400 disabled:bg-blue-300"
+                    : "bg-[#ff9980] hover:bg-[#ff8066] focus:ring-[#ff9980] disabled:bg-[#ffccc2]"
+                }`}
               >
                 <Send className="h-5 w-5" />
               </button>
@@ -286,9 +543,17 @@ export default function ChatInterface() {
         // Chat Open Button (visible when chat is closed)
         <button
           onClick={toggleChat}
-          className="bg-[#ff9980] text-white p-3 rounded-full shadow-lg hover:bg-[#ff8066] focus:outline-none focus:ring-2 focus:ring-[#ff9980] transition-colors"
+          className={`text-white p-3 rounded-full shadow-lg focus:outline-none focus:ring-2 transition-colors ${
+            bookingState
+              ? "bg-blue-500 hover:bg-blue-600 focus:ring-blue-400"
+              : "bg-[#ff9980] hover:bg-[#ff8066] focus:ring-[#ff9980]"
+          }`}
         >
-          <MessageCircle className="h-6 w-6" />
+          {bookingState ? (
+            <CalendarCheck className="h-6 w-6" />
+          ) : (
+            <MessageCircle className="h-6 w-6" />
+          )}
         </button>
       )}
     </div>
