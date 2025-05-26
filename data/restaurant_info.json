@@ -36,7 +36,7 @@
     "id": "hours_weekday",
     "section": "Hours of Operation",
     "content": {
-      "days": "Monday - Thursday",
+      "days": "Monday - Friday",
       "lunch": "11:30 AM - 2:30 PM",
       "dinner": "5:00 PM - 10:00 PM"
     },
@@ -45,24 +45,12 @@
       "day_category": "weekday"
     }
   },
+
   {
-    "id": "hours_friday",
+    "id": "hours_weekend",
     "section": "Hours of Operation",
     "content": {
-      "days": "Friday",
-      "lunch": "11:30 AM - 2:30 PM",
-      "dinner": "5:00 PM - 11:00 PM"
-    },
-    "metadata": {
-      "info_type": "hours",
-      "day_category": "weekend"
-    }
-  },
-  {
-    "id": "hours_saturday",
-    "section": "Hours of Operation",
-    "content": {
-      "days": "Saturday",
+      "days": "Saturday - Sunday",
       "lunch": "11:00 AM - 3:00 PM",
       "dinner": "5:00 PM - 11:00 PM"
     },
@@ -71,19 +59,7 @@
       "day_category": "weekend"
     }
   },
-  {
-    "id": "hours_sunday",
-    "section": "Hours of Operation",
-    "content": {
-      "days": "Sunday",
-      "brunch": "10:00 AM - 3:00 PM",
-      "dinner": "4:30 PM - 9:00 PM"
-    },
-    "metadata": {
-      "info_type": "hours",
-      "day_category": "weekend"
-    }
-  },
+
   {
     "id": "reservations_info",
     "section": "Reservations",
