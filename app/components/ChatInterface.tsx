@@ -168,41 +168,6 @@ export default function ChatInterface() {
     setBookingState(null);
   };
 
-  // Get booking progress indicator
-  const getBookingProgress = () => {
-    if (!bookingState) return null;
-
-    const steps = [
-      "name",
-      "email",
-      "phone",
-      "datetime",
-      "party_size",
-      "special_requests",
-      "confirmation",
-    ];
-    const currentIndex = steps.indexOf(bookingState.step);
-    const progress = ((currentIndex + 1) / steps.length) * 100;
-
-    return (
-      <div className="px-4 py-2 bg-blue-50 border-b border-blue-200">
-        <div className="flex items-center justify-between text-sm text-blue-700 mb-1">
-          <span className="flex items-center gap-1">
-            <CalendarCheck className="h-4 w-4" />
-            Booking in Progress
-          </span>
-          <span>{Math.round(progress)}%</span>
-        </div>
-        <div className="w-full bg-blue-200 rounded-full h-2">
-          <div
-            className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-      </div>
-    );
-  };
-
   // Get booking summary card
   const getBookingSummary = () => {
     if (
@@ -215,12 +180,12 @@ export default function ChatInterface() {
     const { data } = bookingState;
 
     return (
-      <div className="mx-4 mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-        <h4 className="text-sm font-medium text-green-800 mb-2 flex items-center gap-1">
+      <div className="mx-4 mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+        <h4 className="text-sm font-medium text-orange-800 mb-2 flex items-center gap-1">
           <CheckCircle className="h-4 w-4" />
           Booking Details
         </h4>
-        <div className="space-y-1 text-sm text-green-700">
+        <div className="space-y-1 text-sm text-orange-700">
           {data.name && (
             <div className="flex items-center gap-2">
               <User className="h-3 w-3" />
@@ -295,9 +260,6 @@ export default function ChatInterface() {
             </div>
           </div>
 
-          {/* Booking Progress Indicator */}
-          {getBookingProgress()}
-
           {/* Chat Body */}
           <div className="bg-[#faf6f2] flex-1 overflow-auto p-4 space-y-4 h-[400px]">
             {/* Booking Summary Card */}
@@ -323,14 +285,14 @@ export default function ChatInterface() {
                       onClick={() => handleQuickAction(action.query)}
                       className={`flex flex-col items-center p-3 rounded-lg border transition-colors ${
                         action.type === "booking"
-                          ? "bg-blue-50 border-blue-200 hover:bg-blue-100"
+                          ? "bg-orange-50 border-orange-200 hover:bg-orange-100"
                           : "bg-white border-[#ffe0d6] hover:bg-[#ffebe6]"
                       }`}
                     >
                       <div
                         className={`mb-2 ${
                           action.type === "booking"
-                            ? "text-blue-500"
+                            ? "text-orange-500"
                             : "text-[#ff9980]"
                         }`}
                       >
@@ -360,7 +322,7 @@ export default function ChatInterface() {
                         message.role === "user"
                           ? "bg-[#4a4a4a]"
                           : bookingState
-                          ? "bg-blue-500"
+                          ? "bg-[#e67e22]"
                           : "bg-[#ff9980]"
                       }`}
                     >
@@ -379,7 +341,7 @@ export default function ChatInterface() {
                         message.role === "user"
                           ? "bg-[#e8f4fd] text-[#2c5aa0] border border-[#d1e7dd]"
                           : bookingState
-                          ? "bg-blue-50 text-blue-900 border border-blue-200"
+                          ? "bg-orange-50 text-orange-900 border border-orange-200"
                           : "bg-white text-[#5a3e36] border border-[#e5e5e5] shadow-sm"
                       }`}
                     >
@@ -394,7 +356,7 @@ export default function ChatInterface() {
               <div className="flex justify-start items-start gap-3">
                 <div
                   className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                    bookingState ? "bg-blue-500" : "bg-[#ff9980]"
+                    bookingState ? "bg-[#e67e22]" : "bg-[#ff9980]"
                   }`}
                 >
                   {bookingState ? (
@@ -406,24 +368,24 @@ export default function ChatInterface() {
                 <div
                   className={`rounded-lg p-3 border shadow-sm max-w-[75%] ${
                     bookingState
-                      ? "bg-blue-50 border-blue-200"
+                      ? "bg-orange-50 border-orange-200"
                       : "bg-white border-[#e5e5e5]"
                   }`}
                 >
                   <div className="flex space-x-2">
                     <div
                       className={`h-2 w-2 rounded-full animate-bounce ${
-                        bookingState ? "bg-blue-500" : "bg-[#ff9980]"
+                        bookingState ? "bg-[#e67e22]" : "bg-[#ff9980]"
                       }`}
                     ></div>
                     <div
                       className={`h-2 w-2 rounded-full animate-bounce [animation-delay:0.2s] ${
-                        bookingState ? "bg-blue-500" : "bg-[#ff9980]"
+                        bookingState ? "bg-[#e67e22]" : "bg-[#ff9980]"
                       }`}
                     ></div>
                     <div
                       className={`h-2 w-2 rounded-full animate-bounce [animation-delay:0.4s] ${
-                        bookingState ? "bg-blue-500" : "bg-[#ff9980]"
+                        bookingState ? "bg-[#e67e22]" : "bg-[#ff9980]"
                       }`}
                     ></div>
                   </div>
@@ -435,13 +397,13 @@ export default function ChatInterface() {
 
           {/* Smart Input Suggestions */}
           {bookingState && (
-            <div className="bg-blue-50 border-t border-blue-200 p-2">
+            <div className="bg-orange-50 border-t border-orange-200 p-2">
               <div className="flex flex-wrap gap-1">
                 {bookingState.step === "datetime" && (
                   <>
                     <button
                       onClick={() => handleSubmit(null, "Tomorrow at 7 PM")}
-                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
                     >
                       Tomorrow 7 PM
                     </button>
@@ -449,7 +411,7 @@ export default function ChatInterface() {
                       onClick={() =>
                         handleSubmit(null, "This Saturday at 6:30 PM")
                       }
-                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
                     >
                       Saturday 6:30 PM
                     </button>
@@ -461,7 +423,7 @@ export default function ChatInterface() {
                       <button
                         key={size}
                         onClick={() => handleSubmit(null, size.toString())}
-                        className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                        className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
                       >
                         {size} people
                       </button>
@@ -472,7 +434,7 @@ export default function ChatInterface() {
                   <>
                     <button
                       onClick={() => handleSubmit(null, "None")}
-                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
                     >
                       None
                     </button>
@@ -480,7 +442,7 @@ export default function ChatInterface() {
                       onClick={() =>
                         handleSubmit(null, "Vegetarian options please")
                       }
-                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
                     >
                       Vegetarian
                     </button>
@@ -488,7 +450,7 @@ export default function ChatInterface() {
                       onClick={() =>
                         handleSubmit(null, "Anniversary celebration")
                       }
-                      className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200"
+                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
                     >
                       Anniversary
                     </button>
@@ -503,7 +465,7 @@ export default function ChatInterface() {
             onSubmit={handleSubmit}
             className={`p-3 border-t ${
               bookingState
-                ? "bg-blue-50 border-blue-200"
+                ? "bg-orange-50 border-orange-200"
                 : "bg-white border-[#ffe0d6]"
             }`}
           >
@@ -520,7 +482,7 @@ export default function ChatInterface() {
                 }
                 className={`flex-1 px-4 py-2 border rounded-full focus:outline-none focus:ring-2 text-slate-500 ${
                   bookingState
-                    ? "border-blue-200 focus:ring-blue-400"
+                    ? "border-orange-200 focus:ring-orange-400"
                     : "border-[#ffe0d6] focus:ring-[#ff9980]"
                 }`}
                 disabled={isLoading}
@@ -530,7 +492,7 @@ export default function ChatInterface() {
                 disabled={isLoading || !input.trim()}
                 className={`text-white p-2 rounded-full focus:outline-none focus:ring-2 disabled:cursor-not-allowed transition-colors ${
                   bookingState
-                    ? "bg-blue-500 hover:bg-blue-600 focus:ring-blue-400 disabled:bg-blue-300"
+                    ? "bg-[#e67e22] hover:bg-[#d35400] focus:ring-orange-400 disabled:bg-orange-300"
                     : "bg-[#ff9980] hover:bg-[#ff8066] focus:ring-[#ff9980] disabled:bg-[#ffccc2]"
                 }`}
               >
@@ -545,7 +507,7 @@ export default function ChatInterface() {
           onClick={toggleChat}
           className={`text-white p-3 rounded-full shadow-lg focus:outline-none focus:ring-2 transition-colors ${
             bookingState
-              ? "bg-blue-500 hover:bg-blue-600 focus:ring-blue-400"
+              ? "bg-[#e67e22] hover:bg-[#d35400] focus:ring-orange-400"
               : "bg-[#ff9980] hover:bg-[#ff8066] focus:ring-[#ff9980]"
           }`}
         >
