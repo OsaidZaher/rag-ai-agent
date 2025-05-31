@@ -133,7 +133,8 @@ async function saveToGoogleSheets(
         bookingData.name,
         bookingData.email,
         bookingData.partySize,
-        bookingData.dateTime,
+        bookingData.date,
+        bookingData.time,
         bookingData.specialRequests || "",
         eventId,
         "Confirmed",
@@ -142,7 +143,7 @@ async function saveToGoogleSheets(
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: "RestaurantBookings!A:H", // Updated range to H (removed phone column)
+      range: "RestaurantBookings!A:I", // Updated range to I (separate date and time, no combined dateTime)
       valueInputOption: "RAW",
       requestBody: {
         values,
