@@ -1,19 +1,18 @@
 // Test script to verify VAPI booking functionality
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
 async function testBooking() {
   const testReservation = {
     message: {
       type: "function-call",
       functionCall: {
-        name: "makeReservation",
-        parameters: JSON.stringify({
+        name: "makeReservation",        parameters: JSON.stringify({
           name: "John Doe",
           email: "john.doe@example.com",
-          date: "06/15",
-          time: "7:30 PM",
-          partySize: 4,
-          specialRequests: "Window table please",
+          date: "07/15",
+          time: "6:00 PM",
+          partySize: 2,
+          specialRequests: "Quiet table please",
         }),
       },
     },

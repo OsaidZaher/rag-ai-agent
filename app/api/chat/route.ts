@@ -143,7 +143,7 @@ async function saveToGoogleSheets(
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: "RestaurantBookings!A:I", // Updated range to I (separate date and time, no combined dateTime)
+      range: "RestaurantBookings!A:I", // Updated range to J (added separate date and time columns)
       valueInputOption: "RAW",
       requestBody: {
         values,
