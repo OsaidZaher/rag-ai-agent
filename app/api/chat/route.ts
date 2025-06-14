@@ -127,14 +127,35 @@ async function saveToGoogleSheets(
   eventId: string
 ): Promise<boolean> {
   try {
+    // Use the separate date and time fields if available, otherwise parse from dateTime
+    let date, time;
+
+    if (bookingData.date && bookingData.time) {
+      // Use the separate fields directly
+      date = bookingData.date;
+      time = bookingData.time;
+    } else if (bookingData.dateTime) {
+      // Parse from combined dateTime as fallback
+      const bookingDateTime = new Date(bookingData.dateTime);
+      date = bookingDateTime.toLocaleDateString();
+      time = bookingDateTime.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else {
+      // Default values if neither is available
+      date = "Not specified";
+      time = "Not specified";
+    }
+
     const values = [
       [
         new Date().toISOString(), // Timestamp
         bookingData.name,
         bookingData.email,
         bookingData.partySize,
-        bookingData.date,
-        bookingData.time,
+        date, // Use separate date field
+        time, // Use separate time field
         bookingData.specialRequests || "",
         eventId,
         "Confirmed",
@@ -143,7 +164,7 @@ async function saveToGoogleSheets(
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: "RestaurantBookings!A:I", // Updated range to J (added separate date and time columns)
+      range: "RestaurantBookings!A:I",
       valueInputOption: "RAW",
       requestBody: {
         values,
@@ -186,6 +207,7 @@ function detectIntent(message: string): "booking" | "information" | "cancel" {
     "back",
     "go back",
     "never mind",
+    "mistake", // Added "mistake" as a cancel keyword
   ];
 
   const lowerMessage = message.toLowerCase();
@@ -220,23 +242,42 @@ function extractBookingInfo(message: string): any {
   };
 }
 
-// Function to parse date in month/day format
+// Function to parse date in month/day or day/month format
 function parseDate(dateInput: string): Date | null {
   try {
     const currentYear = new Date().getFullYear();
 
-    // Handle MM/DD or MM/DD/YYYY format
+    // Handle MM/DD or DD/MM or MM/DD/YYYY format
     const dateMatch = dateInput.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);
     if (dateMatch) {
-      const month = parseInt(dateMatch[1]) - 1; // Month is 0-indexed
-      const day = parseInt(dateMatch[2]);
+      const firstNum = parseInt(dateMatch[1]);
+      const secondNum = parseInt(dateMatch[2]);
+      let month, day;
+
+      // Determine if it's MM/DD or DD/MM format
+      // If first number is > 12, it must be a day
+      if (firstNum > 12) {
+        day = firstNum;
+        month = secondNum - 1; // Month is 0-indexed
+      }
+      // If second number is > 12, it must be a day
+      else if (secondNum > 12) {
+        month = firstNum - 1; // Month is 0-indexed
+        day = secondNum;
+      }
+      // If both could be month or day, assume MM/DD format as default
+      else {
+        month = firstNum - 1; // Month is 0-indexed
+        day = secondNum;
+      }
+
       const year = dateMatch[3] ? parseInt(dateMatch[3]) : currentYear;
       return new Date(year, month, day);
     }
 
-    // Handle month names (e.g., "December 25" or "Dec 25")
+    // Handle month names (e.g., "December 25" or "Dec 25" or "25 December" or "25 Dec")
     const monthNameMatch = dateInput.match(
-      /(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})(?:\s+(\d{4}))?/i
+      /(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{1,2})(?:\s+(\d{4}))?|(\d{1,2})\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(?:\s+(\d{4}))?/i
     );
     if (monthNameMatch) {
       const monthNames = {
@@ -264,12 +305,28 @@ function parseDate(dateInput: string): Date | null {
         december: 11,
         dec: 11,
       };
-      const month =
-        monthNames[monthNameMatch[1].toLowerCase() as keyof typeof monthNames];
-      const day = parseInt(monthNameMatch[2]);
-      const year = monthNameMatch[3]
-        ? parseInt(monthNameMatch[3])
-        : currentYear;
+
+      let month, day, year;
+
+      // Check if it's "Month Day" format
+      if (monthNameMatch[1]) {
+        month =
+          monthNames[
+            monthNameMatch[1].toLowerCase() as keyof typeof monthNames
+          ];
+        day = parseInt(monthNameMatch[2]);
+        year = monthNameMatch[3] ? parseInt(monthNameMatch[3]) : currentYear;
+      }
+      // Otherwise it's "Day Month" format
+      else {
+        day = parseInt(monthNameMatch[4]);
+        month =
+          monthNames[
+            monthNameMatch[5].toLowerCase() as keyof typeof monthNames
+          ];
+        year = monthNameMatch[6] ? parseInt(monthNameMatch[6]) : currentYear;
+      }
+
       return new Date(year, month, day);
     }
 
@@ -279,17 +336,76 @@ function parseDate(dateInput: string): Date | null {
   }
 }
 
+// Function to check if time is within restaurant opening hours
+function isWithinOpeningHours(
+  hours: number,
+  minutes: number,
+  dayOfWeek: number
+): boolean {
+  // Restaurant hours: 11:30 AM - 10:00 PM Weekdays and 11:00 AM - 11:00 PM Weekends
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 0 is Sunday, 6 is Saturday
+
+  if (isWeekend) {
+    // Weekend hours: 11:00 AM - 11:00 PM
+    const openingHour = 11;
+    const openingMinute = 0;
+    const closingHour = 23;
+    const closingMinute = 0;
+
+    // Check if time is within opening hours
+    if (
+      hours < openingHour ||
+      (hours === openingHour && minutes < openingMinute)
+    ) {
+      return false; // Too early
+    }
+    if (
+      hours > closingHour ||
+      (hours === closingHour && minutes > closingMinute)
+    ) {
+      return false; // Too late
+    }
+    return true;
+  } else {
+    // Weekday hours: 11:30 AM - 10:00 PM
+    const openingHour = 11;
+    const openingMinute = 30;
+    const closingHour = 22;
+    const closingMinute = 0;
+
+    // Check if time is within opening hours
+    if (
+      hours < openingHour ||
+      (hours === openingHour && minutes < openingMinute)
+    ) {
+      return false; // Too early
+    }
+    if (
+      hours > closingHour ||
+      (hours === closingHour && minutes > closingMinute)
+    ) {
+      return false; // Too late
+    }
+    return true;
+  }
+}
+
 // Enhanced function to parse time with more flexible formats
-function parseTime(timeInput: string): string | null {
+function parseTime(timeInput: string, date?: Date): string | null {
   const lowerInput = timeInput.toLowerCase().trim();
+  // Ensure currentDate is a proper Date object
+  const currentDate = date instanceof Date ? date : new Date();
+  const dayOfWeek = currentDate.getDay();
 
   // Handle various time formats
   let timeMatch;
+  let hours = 0;
+  let minutes = 0;
 
   // Format: 8pm, 8 pm, 8PM, 8 PM
   timeMatch = lowerInput.match(/(\d{1,2})\s*(am|pm|a\.m\.|p\.m\.)/);
   if (timeMatch) {
-    let hours = parseInt(timeMatch[1]);
+    hours = parseInt(timeMatch[1]);
     const period = timeMatch[2].toLowerCase();
 
     if ((period === "pm" || period === "p.m.") && hours !== 12) {
@@ -298,14 +414,19 @@ function parseTime(timeInput: string): string | null {
       hours = 0;
     }
 
+    minutes = 0;
+    if (!isWithinOpeningHours(hours, minutes, dayOfWeek)) {
+      return null; // Outside opening hours
+    }
+
     return `${hours.toString().padStart(2, "0")}:00`;
   }
 
   // Format: 8:30pm, 8:30 pm, 8:30PM, 8:30 PM
   timeMatch = lowerInput.match(/(\d{1,2}):(\d{2})\s*(am|pm|a\.m\.|p\.m\.)/);
   if (timeMatch) {
-    let hours = parseInt(timeMatch[1]);
-    const minutes = timeMatch[2];
+    hours = parseInt(timeMatch[1]);
+    minutes = parseInt(timeMatch[2]);
     const period = timeMatch[3].toLowerCase();
 
     if ((period === "pm" || period === "p.m.") && hours !== 12) {
@@ -314,43 +435,70 @@ function parseTime(timeInput: string): string | null {
       hours = 0;
     }
 
-    return `${hours.toString().padStart(2, "0")}:${minutes}`;
+    if (!isWithinOpeningHours(hours, minutes, dayOfWeek)) {
+      return null; // Outside opening hours
+    }
+
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}`;
   }
 
   // Format: 8 o'clock, 8 oclock
   timeMatch = lowerInput.match(/(\d{1,2})\s*(?:o'clock|oclock)/);
   if (timeMatch) {
-    const hours = parseInt(timeMatch[1]);
+    const rawHours = parseInt(timeMatch[1]);
     // Assume PM for dinner hours (5-11), AM for earlier hours
-    const adjustedHours = hours >= 5 && hours <= 11 ? hours + 12 : hours;
-    return `${adjustedHours.toString().padStart(2, "0")}:00`;
+    hours = rawHours >= 5 && rawHours <= 11 ? rawHours + 12 : rawHours;
+    minutes = 0;
+
+    if (!isWithinOpeningHours(hours, minutes, dayOfWeek)) {
+      return null; // Outside opening hours
+    }
+
+    return `${hours.toString().padStart(2, "0")}:00`;
   }
 
   // Format: 20:30 (24-hour format)
   timeMatch = lowerInput.match(/(\d{1,2}):(\d{2})$/);
   if (timeMatch) {
-    const hours = parseInt(timeMatch[1]);
-    const minutes = timeMatch[2];
+    hours = parseInt(timeMatch[1]);
+    minutes = parseInt(timeMatch[2]);
 
     if (hours >= 0 && hours <= 23) {
-      return `${hours.toString().padStart(2, "0")}:${minutes}`;
+      if (!isWithinOpeningHours(hours, minutes, dayOfWeek)) {
+        return null; // Outside opening hours
+      }
+
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}`;
     }
   }
 
   // Format: just numbers (8, 20, etc.)
   timeMatch = lowerInput.match(/^(\d{1,2})$/);
   if (timeMatch) {
-    const hours = parseInt(timeMatch[1]);
+    const rawHours = parseInt(timeMatch[1]);
 
     // Smart interpretation based on restaurant hours
-    if (hours >= 1 && hours <= 11) {
+    if (rawHours >= 1 && rawHours <= 11) {
       // Assume PM for single digits during dinner hours
-      const adjustedHours = hours + 12;
-      return `${adjustedHours.toString().padStart(2, "0")}:00`;
-    } else if (hours >= 12 && hours <= 23) {
+      hours = rawHours + 12;
+      minutes = 0;
+    } else if (rawHours >= 12 && rawHours <= 23) {
       // 24-hour format
-      return `${hours.toString().padStart(2, "0")}:00`;
+      hours = rawHours;
+      minutes = 0;
+    } else {
+      return null;
     }
+
+    if (!isWithinOpeningHours(hours, minutes, dayOfWeek)) {
+      return null; // Outside opening hours
+    }
+
+    return `${hours.toString().padStart(2, "0")}:00`;
   }
 
   return null;
@@ -537,46 +685,92 @@ async function handleBookingFlow(
       }
 
       if (bookingState.data.email) {
-        responseMessage = `Perfect! I have your email as ${bookingState.data.email}. Now, when would you like to dine with us? Please provide your preferred date and time.\n\nYou can format your time flexibly (like "8pm", "8:30pm", "8 o'clock") and date as month/day. We're open 11:30 AM - 10:00 PM Weekdays and 11:00 AM - 11:00 PM Weekends.`;
-        bookingState.step = "datetime";
+        responseMessage = `Perfect! I have your email as ${bookingState.data.email}. Now, what date would you like to dine with us? Please provide your preferred date.\n\nYou can format your date as month/day (like 12/25) or use month names (like December 25).`;
+        bookingState.step = "date";
       } else {
         responseMessage =
           "I need a valid email address. Please provide your email in the format: example@email.com";
       }
       break;
 
-    case "datetime":
-      // Parse date and time from user input with enhanced flexibility
-      if (!bookingState.data.dateTime) {
+    case "date":
+      // Parse date from user input
+      if (!bookingState.data.date) {
         const dateMatch = userMessage.match(
           /(\d{1,2}\/\d{1,2}(?:\/\d{4})?|(?:january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{1,2}(?:\s+\d{4})?)/i
         );
 
+        if (dateMatch) {
+          const parsedDate = parseDate(dateMatch[0]);
+          if (parsedDate) {
+            // Store the date in a readable format
+            bookingState.data.date = parsedDate.toLocaleDateString();
+            // Also store the Date object for later combining with time
+            bookingState.data._parsedDate = parsedDate;
+          }
+        }
+      }
+
+      if (bookingState.data.date) {
+        responseMessage = `Great! You've selected ${bookingState.data.date} for your reservation. What time would you prefer? We're open 11:30 AM - 10:00 PM Weekdays and 11:00 AM - 11:00 PM Weekends.\n\nYou can format your time flexibly (like "8pm", "8:30pm", "8 o'clock").`;
+        bookingState.step = "time";
+      } else {
+        responseMessage =
+          "I need a valid date. Please provide:\n- Date: MM/DD format (like 12/25) or\n- Month and day: like 'December 25' or 'Dec 25'";
+      }
+      break;
+
+    case "time":
+      // Parse time from user input
+      if (!bookingState.data.time) {
         // Enhanced time matching with multiple patterns
         const timeMatch = userMessage.match(
           /(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm|a\.m\.|p\.m\.)\b|\b(\d{1,2})(?::(\d{2}))?\s*(?:o'clock|oclock)\b|\b(\d{1,2})\s*(am|pm|AM|PM)\b|\b(\d{1,2})(?::(\d{2}))?\s*$/
         );
 
-        if (dateMatch && timeMatch) {
-          const parsedDate = parseDate(dateMatch[0]);
-          const parsedTime = parseTime(timeMatch[0]);
+        if (timeMatch) {
+          // Pass the parsed date to parseTime to check against opening hours
+          const parsedTime = parseTime(
+            timeMatch[0],
+            bookingState.data._parsedDate
+          );
+          if (parsedTime) {
+            // Store the time string
+            bookingState.data.time = parsedTime;
 
-          if (parsedDate && parsedTime) {
-            const [hours, minutes] = parsedTime.split(":");
-            parsedDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-            bookingState.data.dateTime = parsedDate.toISOString();
+            // Combine date and time for the dateTime field
+            if (bookingState.data._parsedDate) {
+              const parsedDate = new Date(bookingState.data._parsedDate);
+              const [hours, minutes] = parsedTime.split(":").map(Number);
+              parsedDate.setHours(hours, minutes, 0, 0);
+
+              // Check if date is in the past
+              if (parsedDate < new Date()) {
+                // If time is in the past today, assume tomorrow
+                if (
+                  parsedDate.getDate() === new Date().getDate() &&
+                  parsedDate.getMonth() === new Date().getMonth() &&
+                  parsedDate.getFullYear() === new Date().getFullYear()
+                ) {
+                  parsedDate.setDate(parsedDate.getDate() + 1);
+                } else {
+                  // If date is in the past, assume next year
+                  parsedDate.setFullYear(parsedDate.getFullYear() + 1);
+                }
+              }
+
+              bookingState.data.dateTime = parsedDate.toISOString();
+            }
           }
         }
       }
 
-      if (bookingState.data.dateTime) {
-        responseMessage = `Great! You'd like to book for ${new Date(
-          bookingState.data.dateTime
-        ).toLocaleString()}. How many people will be in your party? (Maximum 8 people)`;
+      if (bookingState.data.time) {
+        responseMessage = `Perfect! You've selected ${bookingState.data.date} at ${bookingState.data.time}. How many people will be in your party? (Maximum 8 people)`;
         bookingState.step = "party_size";
       } else {
         responseMessage =
-          "I need both date and time. Please provide:\n- Date: MM/DD format (like 12/25)\n- Time: You can say it naturally like '8pm', '8:30pm', '8 o'clock', or '20:30'\n\nFor example: '12/25 at 8pm' or 'December 25th at 8:30'";
+          "I need a valid time within our opening hours. We're open 11:30 AM - 10:00 PM on weekdays and 11:00 AM - 11:00 PM on weekends. Please provide your preferred time like '7pm', '8:30pm', or '6 o'clock'.";
       }
       break;
 
@@ -611,7 +805,8 @@ async function handleBookingFlow(
       
 Name: ${bookingState.data.name}
 Email: ${bookingState.data.email}
-Date & Time: ${new Date(bookingState.data.dateTime).toLocaleString()}
+Date: ${bookingState.data.date}
+Time: ${bookingState.data.time}
 Party Size: ${bookingState.data.partySize}
 Special Requests: ${bookingState.data.specialRequests || "None"}
 
@@ -629,9 +824,12 @@ Is this information correct? Please reply 'yes' to confirm or tell me what needs
 
         if (!isAvailable) {
           responseMessage =
-            "I'm sorry, but that time slot is not available. Could you please choose a different date and time? You can use flexible formats like '8pm', '8:30pm', or '8 o'clock'.";
-          bookingState.step = "datetime";
+            "I'm sorry, but that time slot is not available. Could you please choose a different date and time? You can use flexible formats like '7pm', '8:30pm', or '6 o'clock'.";
+          bookingState.step = "date";
+          bookingState.data.date = null;
+          bookingState.data.time = null;
           bookingState.data.dateTime = null;
+          bookingState.data._parsedDate = null;
         } else {
           // Create the booking
           const eventId = await createBooking(bookingState.data);
@@ -647,7 +845,8 @@ Is this information correct? Please reply 'yes' to confirm or tell me what needs
 
 Confirmation Details:
 - Name: ${bookingState.data.name}
-- Date & Time: ${new Date(bookingState.data.dateTime).toLocaleString()}
+- Date: ${bookingState.data.date}
+- Time: ${bookingState.data.time}
 - Party Size: ${bookingState.data.partySize}
 - Confirmation ID: ${eventId.substring(0, 8)}
 
@@ -666,10 +865,53 @@ Is there anything else I can help you with today?`;
             bookingState.step = "confirmation";
           }
         }
-      } else {
+      } else if (userMessage.toLowerCase().includes("mistake")) {
+        // Handle "mistake" to cancel the booking
         responseMessage =
-          "What would you like to change? Please let me know and I'll update your information. You can also say 'cancel' to start over.";
-        // You could add logic here to detect what they want to change and go to that step
+          "I've cancelled this booking process. Is there anything else I can help you with today?";
+        isComplete = true; // Reset the booking state
+      } else {
+        // Check for specific fields to change
+        const lowerMessage = userMessage.toLowerCase();
+
+        if (lowerMessage.includes("name")) {
+          responseMessage = `Let's update your name. What is your correct name?`;
+          bookingState.step = "name";
+          bookingState.data.name = null; // Clear the name to be updated
+        } else if (lowerMessage.includes("email")) {
+          responseMessage = `Let's update your email. What is your correct email address?`;
+          bookingState.step = "email";
+          bookingState.data.email = null; // Clear the email to be updated
+        } else if (lowerMessage.includes("date")) {
+          responseMessage = `Let's update your date. What date would you prefer?`;
+          bookingState.step = "date";
+          bookingState.data.date = null; // Clear the date to be updated
+          bookingState.data._parsedDate = null;
+          bookingState.data.dateTime = null;
+        } else if (lowerMessage.includes("time")) {
+          responseMessage = `Let's update your time. What time would you prefer? We're open 11:30 AM - 10:00 PM on weekdays and 11:00 AM - 11:00 PM on weekends.`;
+          bookingState.step = "time";
+          bookingState.data.time = null; // Clear the time to be updated
+          bookingState.data.dateTime = null;
+        } else if (
+          lowerMessage.includes("party") ||
+          lowerMessage.includes("people") ||
+          lowerMessage.includes("size")
+        ) {
+          responseMessage = `Let's update your party size. How many people will be in your party? (Maximum 8 people)`;
+          bookingState.step = "party_size";
+          bookingState.data.partySize = null; // Clear the party size to be updated
+        } else if (
+          lowerMessage.includes("special") ||
+          lowerMessage.includes("request")
+        ) {
+          responseMessage = `Let's update your special requests. Please provide your special requests or dietary restrictions, or say 'none' if you don't have any.`;
+          bookingState.step = "special_requests";
+          bookingState.data.specialRequests = null; // Clear the special requests to be updated
+        } else {
+          responseMessage =
+            "What would you like to change? Please specify which information you want to update (name, email, date, time, party size, or special requests). You can also say 'cancel' to start over or 'mistake' to cancel the booking.";
+        }
       }
       break;
   }

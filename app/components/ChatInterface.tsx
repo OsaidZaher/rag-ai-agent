@@ -33,6 +33,8 @@ type BookingState = {
     email?: string;
     phone?: string;
     dateTime?: string;
+    date?: string;
+    time?: string;
     partySize?: number;
     specialRequests?: string;
   };
@@ -204,10 +206,16 @@ export default function ChatInterface() {
               <span>{data.phone}</span>
             </div>
           )}
-          {data.dateTime && (
+          {data.date && (
             <div className="flex items-center gap-2">
               <Calendar className="h-3 w-3" />
-              <span>{new Date(data.dateTime).toLocaleString()}</span>
+              <span>{data.date}</span>
+            </div>
+          )}
+          {data.time && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-3 w-3" />
+              <span>{data.time}</span>
             </div>
           )}
           {data.partySize && (
@@ -395,70 +403,7 @@ export default function ChatInterface() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Smart Input Suggestions */}
-          {bookingState && (
-            <div className="bg-orange-50 border-t border-orange-200 p-2">
-              <div className="flex flex-wrap gap-1">
-                {bookingState.step === "datetime" && (
-                  <>
-                    <button
-                      onClick={() => handleSubmit(null, "Tomorrow at 7 PM")}
-                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
-                    >
-                      Tomorrow 7 PM
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleSubmit(null, "This Saturday at 6:30 PM")
-                      }
-                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
-                    >
-                      Saturday 6:30 PM
-                    </button>
-                  </>
-                )}
-                {bookingState.step === "party_size" && (
-                  <>
-                    {[2, 4, 6].map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => handleSubmit(null, size.toString())}
-                        className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
-                      >
-                        {size} people
-                      </button>
-                    ))}
-                  </>
-                )}
-                {bookingState.step === "special_requests" && (
-                  <>
-                    <button
-                      onClick={() => handleSubmit(null, "None")}
-                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
-                    >
-                      None
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleSubmit(null, "Vegetarian options please")
-                      }
-                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
-                    >
-                      Vegetarian
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleSubmit(null, "Anniversary celebration")
-                      }
-                      className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full hover:bg-orange-200"
-                    >
-                      Anniversary
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+          {/* No Smart Input Suggestions - Removed as per requirements */}
 
           {/* Chat Input */}
           <form
