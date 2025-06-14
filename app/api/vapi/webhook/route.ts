@@ -20,12 +20,13 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("📨 Message type:", message.type);
-    console.log("📋 Message content keys:", Object.keys(message));
-
-    // Handle different message types
+    console.log("📋 Message content keys:", Object.keys(message)); // Handle different message types
     switch (message.type) {
       case "function-call":
         return await handleFunctionCall(message);
+
+      case "tool-calls":
+        return await handleToolCalls(message);
 
       case "conversation-update":
         return await handleConversationUpdate(message);
@@ -50,6 +51,103 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+async function handleToolCalls(message: any) {
+  console.log("🛠️ Handling tool calls");
+  console.log("📝 Tool calls:", JSON.stringify(message.toolCalls, null, 2));
+
+  if (!message.toolCalls || message.toolCalls.length === 0) {
+    console.log("❌ No tool calls found in message");
+    return NextResponse.json({ error: "No tool calls found" }, { status: 400 });
+  }
+
+  // Process each tool call and collect results
+  const results = [];
+
+  for (const toolCall of message.toolCalls) {
+    console.log("🔧 Processing tool call:", toolCall.function?.name);
+
+    if (toolCall.function?.name === "makeReservation") {
+      // Parse the arguments - they might be a string or already an object
+      let params;
+      if (typeof toolCall.function.arguments === "string") {
+        try {
+          params = JSON.parse(toolCall.function.arguments);
+        } catch (error) {
+          console.error("❌ Error parsing tool call arguments:", error);
+          results.push({
+            toolCallId: toolCall.id,
+            result:
+              "I'm sorry, there was an error processing your request. Please try again.",
+          });
+          continue;
+        }
+      } else {
+        params = toolCall.function.arguments;
+      }
+
+      console.log(
+        "📋 Parsed reservation params:",
+        JSON.stringify(params, null, 2)
+      );
+
+      // Get the reservation result
+      const reservationResponse = await handleMakeReservation(params);
+      const reservationResult = await reservationResponse.json();
+
+      results.push({
+        toolCallId: toolCall.id,
+        result:
+          reservationResult.result || "Reservation processed successfully.",
+      });
+    } else if (toolCall.function?.name === "getRestaurantInfo") {
+      // Parse the arguments - they might be a string or already an object
+      let params;
+      if (typeof toolCall.function.arguments === "string") {
+        try {
+          params = JSON.parse(toolCall.function.arguments);
+        } catch (error) {
+          console.error("❌ Error parsing tool call arguments:", error);
+          results.push({
+            toolCallId: toolCall.id,
+            result:
+              "I'm sorry, there was an error processing your request. Please try again.",
+          });
+          continue;
+        }
+      } else {
+        params = toolCall.function.arguments;
+      }
+
+      console.log(
+        "📋 Parsed restaurant info params:",
+        JSON.stringify(params, null, 2)
+      );
+
+      // Get the restaurant info result
+      const infoResponse = await handleGetRestaurantInfo(params);
+      const infoResult = await infoResponse.json();
+
+      results.push({
+        toolCallId: toolCall.id,
+        result: infoResult.result || "Restaurant information retrieved.",
+      });
+    } else {
+      console.log("⚠️ Unrecognized tool call:", toolCall.function?.name);
+      results.push({
+        toolCallId: toolCall.id,
+        result:
+          "I'm sorry, I don't understand that request. Please try asking about our menu or making a reservation.",
+      });
+    }
+  }
+
+  // Return the results in VAPI format
+  console.log("📋 Tool call results:", JSON.stringify(results, null, 2));
+  return NextResponse.json({
+    results: results,
+  });
 }
 
 async function handleConversationUpdate(message: any) {
@@ -251,29 +349,37 @@ async function handleFunctionCall(message: any) {
   }
 }
 
+// ...existing code...
+
 async function handleGetRestaurantInfo(params: { query: string }) {
   console.log("ℹ️ Getting restaurant info for query:", params.query);
 
   try {
-    // Create a request to reuse the existing chat functionality (RAG system)
-    const chatRequest = new Request("http://localhost:3000/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "user",
-            content: params.query,
-          },
-        ],
-        bookingState: null, // This is an information query, not booking
-      }),
+    // Create a mock request object to pass to the chat handler
+    const requestBody = JSON.stringify({
+      messages: [
+        {
+          role: "user",
+          content: params.query,
+        },
+      ],
+      bookingState: null, // This is an information query, not booking
     });
 
+    console.log("📞 Calling chat handler directly for restaurant info...");
+
+    // Create a mock NextRequest object
+    const mockRequest = {
+      json: async () => JSON.parse(requestBody),
+      headers: new Headers({
+        "Content-Type": "application/json",
+      }),
+      method: "POST",
+      url: "http://localhost:3000/api/chat",
+    } as NextRequest;
+
     // Call the existing chat handler to leverage RAG functionality
-    const response = await chatHandler(chatRequest as NextRequest);
+    const response = await chatHandler(mockRequest);
     const result = await response.json();
 
     if (result.message?.content) {
@@ -307,14 +413,26 @@ async function handleMakeReservation(params: {
     "📅 Making reservation with params:",
     JSON.stringify(params, null, 2)
   );
-
   // Check if we have all required information
   const { name, email, date, time, partySize, specialRequests } = params;
 
-  if (!name || !email || !date || !time || !partySize) {
+  // Clean up email format if it's in spoken form
+  let cleanEmail = email;
+  if (email && typeof email === "string") {
+    // Convert spoken email format to proper email
+    cleanEmail = email
+      .toLowerCase()
+      .replace(/\s+at\s+/g, "@")
+      .replace(/\s+dot\s+/g, ".")
+      .replace(/\s+/g, ""); // Remove any remaining spaces
+
+    console.log(`📧 Original email: "${email}", Cleaned: "${cleanEmail}"`);
+  }
+
+  if (!name || !cleanEmail || !date || !time || !partySize) {
     console.log("❌ Missing required fields:", {
       name: !!name,
-      email: !!email,
+      email: !!cleanEmail,
       date: !!date,
       time: !!time,
       partySize: !!partySize,
@@ -335,11 +453,6 @@ async function handleMakeReservation(params: {
   }
 
   try {
-    // Format the booking message for the existing chat system
-    const bookingMessage = `I'd like to make a reservation for ${name} (${email}) on ${date} at ${time} for ${partySize} people. ${
-      specialRequests ? `Special requests: ${specialRequests}` : ""
-    }`;
-
     // Handle date formatting - add current year if missing
     let formattedDate = date;
     const currentYear = new Date().getFullYear();
@@ -354,17 +467,28 @@ async function handleMakeReservation(params: {
         formattedDate = `${date}, ${currentYear}`;
       }
     }
-
     console.log(`📅 Original date: "${date}", Formatted: "${formattedDate}"`);
 
+    // Normalize time format for better parsing
+    let normalizedTime = time;
+
+    // Convert "1 PM" to "1:00 PM", "7 AM" to "7:00 AM", etc.
+    if (/^\d{1,2}\s*(AM|PM)$/i.test(time.trim())) {
+      const timeMatch = time.trim().match(/^(\d{1,2})\s*(AM|PM)$/i);
+      if (timeMatch) {
+        normalizedTime = `${timeMatch[1]}:00 ${timeMatch[2].toUpperCase()}`;
+      }
+    }
+
+    console.log(`⏰ Original time: "${time}", Normalized: "${normalizedTime}"`);
+
     // Create dateTime string and validate it
-    const dateTimeString = `${formattedDate} ${time}`;
+    const dateTimeString = `${formattedDate} ${normalizedTime}`;
     const dateTimeObj = new Date(dateTimeString);
 
     console.log(`📅 DateTime string: "${dateTimeString}"`);
-    console.log(`📅 DateTime object: ${dateTimeObj.toISOString()}`);
-    console.log(`📅 DateTime valid: ${!isNaN(dateTimeObj.getTime())}`);
 
+    // Check if the date is valid before calling toISOString
     if (isNaN(dateTimeObj.getTime())) {
       console.log("❌ Invalid date/time format");
       return NextResponse.json({
@@ -373,60 +497,48 @@ async function handleMakeReservation(params: {
       });
     }
 
+    console.log(`📅 DateTime object: ${dateTimeObj.toISOString()}`);
+    console.log(`📅 DateTime valid: ${!isNaN(dateTimeObj.getTime())}`);
     const bookingData = {
       name,
-      email,
+      email: cleanEmail,
       date: formattedDate,
       time: time,
       dateTime: dateTimeObj.toISOString(),
       partySize,
       specialRequests: specialRequests || "None",
     };
+    console.log("📋 Final booking data:", JSON.stringify(bookingData, null, 2));
 
-    console.log("📋 Final booking data:", JSON.stringify(bookingData, null, 2)); // Create a request to reuse the existing booking functionality
-    // We set the message to "yes" to trigger the confirmation flow in the chat handler
-    const chatRequest = new Request("http://localhost:3000/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "user",
-            content: "yes", // This triggers the booking confirmation in the chat handler
-          },
-        ],
-        bookingState: {
-          step: "confirmation",
-          data: bookingData,
+    // Create a mock request object to pass to the chat handler
+    const requestBody = JSON.stringify({
+      messages: [
+        {
+          role: "user",
+          content: "yes", // This triggers the booking confirmation in the chat handler
         },
-      }),
+      ],
+      bookingState: {
+        step: "confirmation",
+        data: bookingData,
+      },
     });
 
-    console.log("📞 Calling chat handler with booking data...");
-    console.log(
-      "📋 Request body being sent:",
-      JSON.stringify(
-        {
-          messages: [
-            {
-              role: "user",
-              content: "yes",
-            },
-          ],
-          bookingState: {
-            step: "confirmation",
-            data: bookingData,
-          },
-        },
-        null,
-        2
-      )
-    );
+    console.log("📞 Calling chat handler directly with booking data...");
+    console.log("📋 Request body being sent:", requestBody);
 
-    // Call the existing chat handler to leverage booking functionality
-    const response = await chatHandler(chatRequest as NextRequest);
+    // Create a mock NextRequest object
+    const mockRequest = {
+      json: async () => JSON.parse(requestBody),
+      headers: new Headers({
+        "Content-Type": "application/json",
+      }),
+      method: "POST",
+      url: "http://localhost:3000/api/chat",
+    } as NextRequest;
+
+    // Call the existing chat handler directly to leverage booking functionality
+    const response = await chatHandler(mockRequest);
     const result = await response.json();
 
     console.log("📋 Chat handler response:", JSON.stringify(result, null, 2));
@@ -451,6 +563,8 @@ async function handleMakeReservation(params: {
     });
   }
 }
+
+// ...existing code...
 
 async function handleStatusUpdate(message: any) {
   console.log("📊 Call status update:", message.status);

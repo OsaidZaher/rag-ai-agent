@@ -6,7 +6,8 @@ async function testBooking() {
     message: {
       type: "function-call",
       functionCall: {
-        name: "makeReservation",        parameters: JSON.stringify({
+        name: "makeReservation",
+        parameters: JSON.stringify({
           name: "John Doe",
           email: "john.doe@example.com",
           date: "07/15",
